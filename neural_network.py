@@ -6,6 +6,7 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import matplotlib.pyplot as plt
 
 # 1. Load dataset
 data = load_breast_cancer()
@@ -15,6 +16,7 @@ y = data.target
 
 print("Features shape:", X.shape)
 print("Labels shape:", y.shape)
+
 
 # 2. Split the dataset
 X_train, X_test, y_train, y_test = train_test_split(
@@ -47,14 +49,46 @@ model.compile(
 )
 
 # 6. Train the model
+
+# Stop training when validation loss stops improving
+early_stopping = tf.keras.callbacks.EarlyStopping(
+    monitor="val_loss",
+    patience=3,
+    restore_best_weights=True
+)
+
+# Train the neural network
 history = model.fit(
     X_train,
     y_train,
-    epochs=20,
+    epochs=50,
     batch_size=32,
     validation_split=0.2,
+    callbacks=[early_stopping],
     verbose=1
 )
+
+plt.plot(history.history["loss"], label="Training Loss")
+plt.plot(history.history["val_loss"], label="Validation Loss")
+
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.title("Neural Network Training")
+plt.legend()
+plt.grid(True)
+# plt.show()
+
+# The graph will be saved in your current working directory. You can open it with your image viewer.
+plt.savefig(
+    "training_loss.png",
+    dpi=150,
+    bbox_inches="tight"
+)
+plt.close()
+
+print("Training graph saved successfully.")
+
+
 
 # 7. Evaluate on unseen test data
 loss, accuracy = model.evaluate(X_test, y_test, verbose=0)
@@ -79,3 +113,7 @@ predicted_class = int(probability >= 0.5)
 
 print("\nPredicted class:", data.target_names[predicted_class])
 print("Model output probability:", round(float(probability), 4))
+
+print(f"Raw probability: {float(probability):.10f}")
+print("Actual class:", data.target_names[y_test[0]])
+print("Predicted class:", data.target_names[predicted_class])
